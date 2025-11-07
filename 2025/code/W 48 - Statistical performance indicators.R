@@ -38,19 +38,19 @@
 
 save.pdf = T                                                  # Save pdf and dont plot in rstudio?
 
-# library(extrafont)                                            # Charge installed fonts
-# # font_import()
-# # loadfonts(device = "win")
-# par(family = 'Fira Code')
-# 
-# wd <- paste0(Sys.getenv('HOME'),'/TidyTuesday/2025/')          # Working directory
-# setwd(wd)
-# dat <- tidytuesdayR::tt_load(2025, week = 48)                  # Load data
-# dat <- dat$spi_indicators
-# 
-# # Simplify names
-# colnames(dat) <- c('iso', 'country', 'region', 'income', 'year', 'population', 'overall', 'data use',
-#                   'data services', 'data products', 'data sources', 'data infraestructure')
+library(extrafont)                                            # Charge installed fonts
+# font_import()
+# loadfonts(device = "win")
+par(family = 'Fira Code')
+
+wd <- paste0(Sys.getenv('HOME'),'/TidyTuesday/2025')          # Working directory
+setwd(wd)
+dat <- tidytuesdayR::tt_load(2025, week = 48)                  # Load data
+dat <- dat$spi_indicators
+
+# Simplify names
+colnames(dat) <- c('iso', 'country', 'region', 'income', 'year', 'population', 'overall', 'data use',
+                  'data services', 'data products', 'data sources', 'data infraestructure')
 
 # SETTING PLOTTING GRID AND SAVING METHOD ----------------------------------------------------------
 # All plots are organized as sort of a poster and saved in a pdf file. The plot is arranged in vertical 
@@ -102,7 +102,8 @@ l = rbind(# Main title and data description
           # Signature and data information
           17:20)
 
-if (save.pdf) pdf('SPI.pdf', width = 14, height = (4/10) * nrow(l), family = 'Fira Code')
+if (save.pdf) pdf('plots/W 48 - Statistical Performance Indicators.png', width = 14, height = (4/10) * nrow(l), family = 'Fira Code')
+# png('plots/last week.png', width = 14, height = (4/10) * nrow(l), family = 'Fira Code', units = 'in', res = 180)
 
 layout(l)
 
@@ -237,7 +238,7 @@ rect(xleft = rec[1], ybottom = rec[3], xright = rec[2], ytop = rec[4],
 
 # Axis' labels and names; and title 
 title(main = 'Distribution of countries\nby income level',
-      adj = 1, line = 1.5, cex.main = 1.7, col.main = 'darkblue')
+      adj = 1, line = 1.5, cex.main = 1.68, col.main = 'darkblue')
 title(xlab = 'No. of countries', font.lab = 2, cex.lab = 1, line = 3)
 
 axis(4, at = bp, labels = levels(dat$income) |>  gsub(pattern = ' ', replacement = '\n'), 
