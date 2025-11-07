@@ -102,7 +102,7 @@ l = rbind(# Main title and data description
           # Signature and data information
           17:20)
 
-if (save.pdf) pdf('plots/W 48 - Statistical Performance Indicators.png', width = 14, height = (4/10) * nrow(l), family = 'Fira Code')
+if (save.pdf) pdf('plots/W 48 - Statistical Performance Indicators.pdf', width = 14, height = (4/10) * nrow(l), family = 'Fira Code')
 # png('plots/last week.png', width = 14, height = (4/10) * nrow(l), family = 'Fira Code', units = 'in', res = 180)
 
 layout(l)
