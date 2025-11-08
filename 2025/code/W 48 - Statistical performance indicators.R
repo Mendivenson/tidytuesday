@@ -473,7 +473,7 @@ text(x = 0.5, y = 0.5, cex = 1.2, labels = 'Data published by World Bank ', font
      adj = 0.5, col = rgb(0.5, 0.5, 0.5, alpha = 0.7))
 
 plot.new()
-text(x = 1, y = 0.5, cex = 1.2, labels = 'By Mendivenson Barragán', font = 2,
+text(x = 1, y = 0.5, cex = 1.2, labels = 'Author: Mendivenson Barragán', font = 2,
      adj = 1, col = rgb(0.5, 0.5, 0.5, alpha = 0.7))
 
 if (save.pdf) dev.off()
