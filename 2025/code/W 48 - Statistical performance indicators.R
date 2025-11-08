@@ -64,16 +64,8 @@ l = rbind(# Main title and data description
           rep(1, 4),
           
           # Boxplot/Barplot: Statistical performance related to income level?
-          c(rep(2, 3), 3),
-          c(rep(2, 3), 3),
-          c(rep(2, 3), 3),
-          c(rep(2, 3), 3),
-          c(rep(2, 3), 3),
-          c(rep(2, 3), 3),
-          c(rep(2, 3), 3),
-          c(rep(2, 3), 3),
-          c(rep(2, 3), 3),
-          c(rep(2, 3), 3),
+          c(rep(2, 3), 3), c(rep(2, 3), 3), c(rep(2, 3), 3), c(rep(2, 3), 3), c(rep(2, 3), 3),
+          c(rep(2, 3), 3), c(rep(2, 3), 3), c(rep(2, 3), 3), c(rep(2, 3), 3), c(rep(2, 3), 3),
           
           # Conclusions
           rep(4, 4),
@@ -89,24 +81,25 @@ l = rbind(# Main title and data description
           rep(10, 4), 
           
           # Time series plots: Comparison between pillars
-          c(rep(11, 4)),
-          c(12:14, 15), c(12:14, 15), c(12:14, 15), c(12:14, 15), c(12:14, 15),
-          c(12:14, 15), c(12:14, 15), c(12:14, 15), c(12:14, 15), c(12:14, 15),
+          rep(11,4), rep(11,4), rep(11,4), rep(11,4), rep(11,4),
+          rep(11,4), rep(11,4), rep(11,4), rep(11,4), rep(11,4),
           
           # Conclusions
-          rep(16, 4),
-          rep(16, 4), 
+          rep(12, 4),
+          rep(12, 4), 
           
           # Colombian case: 
+          c(rep(13, 4)),     
+          c(rep(14, 3), 15), c(rep(14, 3), 15), c(rep(14, 3), 15), c(rep(14, 3), 15), c(rep(14, 3), 15),
+          c(rep(14, 3), 15), c(rep(14, 3), 15), c(rep(14, 3), 15), c(rep(14, 3), 15), c(rep(14, 3), 15),
           
           # Signature and data information
-          17:20)
+          16:19)
 
 if (save.pdf) pdf('plots/W 48 - Statistical Performance Indicators.pdf', width = 14, height = (4/10) * nrow(l), family = 'Fira Code')
 # png('plots/last week.png', width = 14, height = (4/10) * nrow(l), family = 'Fira Code', units = 'in', res = 180)
 
 layout(l)
-
 
 # GENERAL TITLE AND DESCRIPTION OF DATA ------------------------------------------------------------
 
@@ -326,9 +319,144 @@ text(x = 0.5, y = 0.48, cex = 1.5, font = 1,
                     sep = '\n'))
 
 # PERFORMANCE FOR EACH PILLAR: ---------------------------------------------------------------------
-for (i in 1:6){
-  plot.new()
+# One could argue that the ts.category object is unnecesary but filtering each time is required to
+# draw a line takes so much time :D
+
+# Preparing the data
+categories <- c('data use', 'data products', 'data sources', 'data services', 'data infraestructure')
+years_by_cat <- list()
+for (category in categories){
+  years_by_cat[[category]] <- dat$year[!is.na(dat[[category]])] |>  unique() |> sort()
 }
+no_years <- c(0,sapply(years_by_cat, length))
+
+
+# Base plot
+par(mar = c(5,4,5,1) + 0.1, font.lab = 2, cex.lab = 1.2, cex.axis = 1.2)
+plot(0,0, type = 'n', xlim = c(1, rev(cumsum(no_years))[1]), ylim = c(0, 100), 
+     xlab = 'Time', ylab = 'Score', bty = 'n', xaxt = 'n', yaxt = 'n')
+
+# Title
+title(main = 'Pillar\'s performance over time', line = 3.6, col.main = 'darkblue', cex.main = 1.9)
+
+# Axis' labels
+axis(2, tick = 'F', line = -0.5)
+axis(1, tick = F, at = 1:(rev(cumsum(no_years))[1]), labels = unlist(years_by_cat), las = 2, 
+     line = -0.5, cex.axis = 1.05)
+axis(3, tick = F, at = (cumsum(no_years) - no_years/2)[-1], line = -0.5,
+     labels = gsub(pattern = ' ', replacement = '\n', categories) |> stringr::str_to_title(), font = 2) 
+
+# Gray background
+rec <- par()$usr 
+rect(xleft = rec[1], ybottom = rec[3], xright = rec[2], ytop = rec[4], 
+     col = 'gray92', border = 'gray92') 
+
+
+# Guide lines
+abline(h = 0:10 * 10, col = 'white', lwd = 1.5)
+abline(v = 1:(rev(cumsum(no_years))[1]), col = 'white', lwd = 1.5)
+for (i in cumsum(no_years) + 0.5){
+  lines(x = c(i,i), y = c(-12, rec[4]), lty = 'solid', xpd = T, lwd = 1.5)
+}
+
+# Color palette
+colores = RColorBrewer::brewer.pal(n = length(categories), name = 'Dark2')
+colores2 <- c("#006400", "#8B4513","#4B0082", "#8B0A50","#228B22")
+names(colores) <- categories
+for (i in 1:length(categories)){
+  category <- categories[i]
+  temp <- dat[,c("year", "iso", category)]
+  temp <- temp[order(temp$year),]
+  temp <- temp[!is.na(temp[[category]]),]
+  iso <- temp$iso |> unique()
+  years <- years_by_cat[[category]]
+  
+  ts.category <- c()
+  for (id in iso){
+    aux <- temp[temp$iso == id, c('year', category)] |> as.data.frame()
+    nombres <- aux[['year']]
+    aux <- aux[[category]]
+    names(aux) <- nombres
+    
+    ts.category <- cbind(ts.category, aux[years |> as.character()])
+  }
+  
+  x.coord <- seq(rev(cumsum(no_years[1:i]))[1] + 1, rev(cumsum(no_years[1:(i + 1)]))[1])
+  for (country in 1:ncol(ts.category)){
+    lines(x = x.coord, y = ts.category[,country],
+          col = adjustcolor(colores[i], 0.1), lwd = 1.8)
+  }
+  
+  mu <- apply(ts.category, MARGIN = 1, \(x) mean(x, na.rm = T))
+  lines(x = x.coord, y = mu, col = colores2[i], lwd = 2.5)
+}
+
+# Conclusions
+par(mar = c(0,0,0,0))
+plot.new()
+text(x = 0.5, y = 0.48, cex = 1.5, font = 1,
+     labels = paste(
+       "The darker line shows the average score for each year and pillar.",
+       "Overall, all pillars exhibit an upward trend over time, particularly the data use index. But again, the wide",
+       "dispersion within each pillar makes it difficult to draw firm conclusions. Country-level analysis could",
+       "provide more meaningful insights of the performance over time for each country.",
+       sep = '\n'))
+
+# THE COLOMBIAN CASE -------------------------------------------------------------------------------
+# IN consequence with the conclusions of the latter plot, a plot for the colombian case :D 
+
+# Title
+par(mar = c(0,0,0,0))
+plot.new()
+text(x = 0.5, y = 0.5, cex = 1.9, labels = 'The colombian case', 
+     font = 2, col = 'darkblue')
+
+# Plot area
+par(mar = c(5,4,1,1) + 0.1)
+temp <- dat[dat$country == 'Colombia',]
+plot(0,0, ylim = c(0,100), xlim = range(temp$year), bty = 'n', xaxt = 'n', yaxt = 'n', 
+     xlab = 'Time', ylab = 'Score')
+axis(2, tick = F, line = -0.5)
+axis(1, at = temp$year |> unique() |> sort() |>  rev(), labels = temp$year |> unique(), 
+     tick = F, line = -0.5)
+
+# grau background
+rec <- par()$usr 
+rect(xleft = rec[1], ybottom = rec[3], xright = rec[2], ytop = rec[4], 
+     col = 'gray92', border = 'gray92') 
+
+# Guide lines
+abline(h = 0:10 * 10, col = 'white', lwd = 1.5)
+abline(v = temp$year |> unique(), col = 'white', lwd = 1.5)
+
+# Actual plot
+for (category in categories){
+  lines(x = temp$year, y = temp[[category]], col = colores[category], lwd = 2)
+}
+
+# Leyenda
+legend('bottomright', inset = c(0.05, 0.05), legend = categories |> stringr::str_to_title(), 
+       ncol = 2,  lty = 'solid', lwd = 2.5, col = colores, bg = 'gray92')
+
+# Conclusions
+par(mar = c(0,0,0,0))
+plot.new()
+text(x = 0.5, y = 0.55, cex = 1.5, font = 1,
+     labels = paste(
+       "In the case of Colombia, there is",
+       "a clear upward trend in overall",
+       "statistical performance",
+       "particularly in the Data Use and",
+       "Data Infrastructure pillars, which",
+       "show the most notable gains.",
+       "However, progress has been slower",
+       "in the areas of Data Products and",
+       "Data Services, suggesting that",
+       "improvements in data quality and",
+       "service delivery have not kept",
+       "pace with infrastructure growth.",
+       sep = '\n'))
+
 
 # DATA INFORMATION AND SIGNATURE -------------------------------------------------------------------
 par(mar = c(0,0,0,0))
