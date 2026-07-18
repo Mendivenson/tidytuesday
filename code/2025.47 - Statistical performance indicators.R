@@ -45,7 +45,7 @@ par(family = 'Fira Code')
 
 wd <- paste0(Sys.getenv('HOME'),'/TidyTuesday/2025')          # Working directory
 setwd(wd)
-dat <- tidytuesdayR::tt_load(2025, week = 48)                  # Load data
+dat <- tidytuesdayR::tt_load(2025, week = 47)                  # Load data
 dat <- dat$spi_indicators
 
 # Simplify names
@@ -96,7 +96,7 @@ l = rbind(# Main title and data description
           # Signature and data information
           16:19)
 
-if (save.pdf) pdf('plots/W 48 - Statistical Performance Indicators.pdf', width = 14, height = (4/10) * nrow(l), family = 'Fira Code')
+if (save.pdf) pdf('plots/W 47 - Statistical Performance Indicators.pdf', width = 14, height = (4/10) * nrow(l), family = 'Fira Code')
 # png('plots/last week.png', width = 14, height = (4/10) * nrow(l), family = 'Fira Code', units = 'in', res = 180)
 
 layout(l)
@@ -461,7 +461,7 @@ text(x = 0.5, y = 0.55, cex = 1.5, font = 1,
 # DATA INFORMATION AND SIGNATURE -------------------------------------------------------------------
 par(mar = c(0,0,0,0))
 plot.new()
-text(x = 0, y = 0.5, cex = 1.2, labels = 'Week 48/52 - TidyTuesday submission', font = 2, adj = 0,
+text(x = 0, y = 0.5, cex = 1.2, labels = 'Week 47/52 - TidyTuesday submission', font = 2, adj = 0,
      col = rgb(0.5, 0.5, 0.5, alpha = 0.7))
 
 plot.new()

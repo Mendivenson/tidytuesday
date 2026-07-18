@@ -15,4 +15,4 @@ Last week’s visualizations focused on achieving a clear and balanced understan
 
 Yeah, I'm aware that the font and ratio between plot-text is not the most optimal but it was too late to fix it :'c
 
-![Statistical Performance Indicators](2025/plots/last%20week.png)
+![Statistical Performance Indicators](plots/last%20week.png)
