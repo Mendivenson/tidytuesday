@@ -33,7 +33,7 @@
 # - Are there interesting ways to visualize these data in >2 dimensions?
 
 setwd(this.path::this.dir())
-current = T
+current = F
 
 # FUNCIONES ----------------------------------------------------------------------------------------
 # Pasar de polar (En términos de radianes) a cartesianos
@@ -131,7 +131,7 @@ body.means <- t(t(body.means)/c(50,200,150,10,200))
 if (current){
   png(file = '../plots/last week.png', width = 8, height = 6, units = 'in', res = 120)
 } else {
-  pdf(file = '../plots/2025.28 - Many penguins.pdf', width = 8, height = 6)
+  pdf(file = '../plots/2026.28 - Many penguins.pdf', width = 8, height = 6)
 }
 
 
@@ -204,9 +204,12 @@ boxplot(`hand-wing.index`~genus,data = dat, horizontal = T, ann = F, yaxt='n',
 legend('bottom', legend = genus, pt.bg = adjustcolor(col.pal, 0.4), col = col.pal, pt.lwd = 2,
        xpd = NA, pch=22, horiz=T, bg='gray90', box.col = 'gray90',
        pt.cex = 2, inset = c(0,-0.15),
-       text.width=graphics::strwidth(genus)+0.05,
-       x.intersp = 0.65)
+       x.intersp = 0.65,
+       # This argument was find only after using claude, sadly
+       text.width=graphics::strwidth(genus)+0.05)
 
 mtext(side=3,text = 'Hand-Wing index', font=2, cex= 0.8)
 mtext(text = 'by genus', side = 3, font=2, col='gray40',line =-1, cex = 0.7,xpd=NA)
 dev.off()
+
+#EOF
