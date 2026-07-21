@@ -6,7 +6,7 @@ The main goal of this project is to explore how far R’s native plotting system
 
 Beyond the technical challenge, this project is also a personal journey to **improve my storytelling skills** by learning how to communicate insights through **simple, clear, and visually appealing graphics**. Each visualization seeks to balance clarity and aesthetics.
 
-This repository contains the code used to generate each weekly visualization. Rather than providing long explanations or written summaries, the main insights and conclusions are embedded directly within the graphics — making every plot a self-contained piece of visual communication.
+This repository contains the code used to generate each weekly visualization. Rather than providing long explanations or written summaries, the main insights and conclusions are embedded directly within the graphics, making every plot a self-contained piece of visual communication.
 
 ## Last Week’s Challenge
 
