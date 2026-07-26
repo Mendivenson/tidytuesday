@@ -53,8 +53,49 @@ tocartesians = function(r, theta){
   return(c('x' = x, 'y' = y))
 }
 
+# Prototipo texto alrededor de un círculo: Seguramente en el futuro lo cambie a alinear la parte de
+# abajo de cada una de las cajas que contienen las letras con el radio dado. Al principio estaba
+# diseñado para tomar el ancho de cada letra, pero las letras se renderizaban de forma bastante
+# extraña. Por eso es que se hacen operaciones innecesarias
+polar_text <- function(r = 1, theta = 6 * pi/4, lab = 'text', cex = 1, ...){
+
+  lab <- strsplit(lab, '')[[1]]
+
+  xy <- graphics::strwidth('m') * cex / 2 |>  rep(length = length(lab))
+  xy <- cbind('x' = xy,
+              'y' = sqrt(r^2 - xy^2))
+
+  lab <- rev(lab)
+
+  angle <- apply(xy, MARGIN = 1,
+                 FUN = function(x){
+                   pi/2 - atan2(x = x[1], y = x[2])
+                 })
+  angle <- cumsum(rep(angle, each = 2))
+  angle <- angle[1:length(angle) %% 2 == 1]
+
+  theta <- theta - rev(angle)[1]/2
+
+  angle  <- theta + angle
+  polars <- cbind(r, angle)
+  coords <- apply(X = polars,
+                  MARGIN = 1,
+                  FUN = \(x) tocartesians(x['r'], x['angle'])) |>
+    t()
+
+  for (letter in 1:length(lab)){
+    text(x = coords[letter,1], y = coords[letter,2], labels = lab[letter],
+         srt = (angle[letter] * 180/pi) + 270,
+         cex = cex, ...)
+  }
+
+}
+
+
 # Función para barplot circular desde (0,0):
-circ.barplot <- function(start = 0, end = pi/2, r = c(0.5, 0.6, 0.7), r_int = 0.5, ...){
+circ.barplot <- function(start = 0, end = pi/2, r = c(0.5, 0.6, 0.7), r_int = 0.5,
+                         labels = c(), collab = 'black', cexlab = 0.2,
+                         fontlab = 2, ...){
 
   # Cálculo de los ángulos en que dividir el círculo
   segs <- length(r)
@@ -83,7 +124,28 @@ circ.barplot <- function(start = 0, end = pi/2, r = c(0.5, 0.6, 0.7), r_int = 0.
 
   # Dibujar el polígono
   polygon(x = breaks_origin[,1], y = breaks_origin[,2], ...)
+
+  if (length(labels) > 0){
+    theta <- c()
+    for (i in seq(2, nrow(polares), by=2)){
+      theta <- rbind(theta, polares[(i-1),"theta"] + (polares[i,"theta"] - polares[(i-1),"theta"])/2)
+    }
+    polares <- cbind(unique(r+0.05),theta)
+    coords  <- apply(polares,
+                     MARGIN = 1,
+                     (\(x) tocartesians(r = x[1], theta = x[2]))) |>
+      t()
+    for (i in 1:length(labels)){
+      def <- par()$lheight
+      par(lheight = 0.75)
+      text(x = coords[i,1], y = coords[i,2], labels = labels[i],
+           srt = (theta[i] * 180/pi) + 270, xpd = NA,
+           col = collab, cex=cexlab, font = fontlab)
+      par(lheight = def)
+    }
+  }
 }
+
 
 
 # DATOS --------------------------------------------------------------------------------------------
@@ -124,73 +186,155 @@ types <- lapply(types,
        })
 types <- do.call(cbind, types)
 types["Non-validated",] <- colSums(types)
+types <- types[,types["Non-validated",] |> sort(decreasing = F) |> names()]
 
 # Validación del Grayson Score relacionado con narrativa:
 narrative <- lapply(c('Validated' = 'Validated',
                       'Non-validated' = 'Non-validated'),
-       (\(x) density(dat[dat$greyson_score == x,]$narrative_length, na.rm = T)))
+       (\(x) density(dat[dat$greyson_score == x,]$narrative_length, na.rm = T, from=0, )))
 
 # PLOTTING -----------------------------------------------------------------------------------------
 # Al contrario de la división usual de los gráficos, el gráfico deseado en este oportunidad sigue una
 # disposición no usual por lo que la disposición se maneja directamente en el código de cada una de
 # las gráficas que componen la infografía.
 
-pdf('../plots/2026.29 - Near-Death Experiences (NDERF).pdf', width=8, height = 8)
+col.pal <- c(
+  'bg'     = 'black',
+  'val'    = '#8FA831',
+  'no.val' = '#8B3A2B',
+  'border' = '#D4C08C',
+  'light'  = 'lightgoldenrod1',
+  'light2' = '#C9A227')
+
+
+pdf('../plots/2026.29 - Near Death Experiences (NDERF).pdf', width=8, height = 8)
+# png(file = '../plots/last week.png', width = 8, height = 8, units = 'in', res = 150)
+# Fondo negro para dejar la temática de luz al final de l túnel :D
 par(bg = 'black', mar = c(0,0,0,0))
 plot(0, xlim = c(-1.8,1.8), ylim = c(-1.8,1.8), type='n')
 
+# BARPLOTS:
+# Tipo de experiencia cerca a la muerte detectada por IA
+circ.barplot(start= pi/18, end= 17*pi/18, col = col.pal["no.val"], lwd=1., border= col.pal["no.val"],
+             r=types["Non-validated",]/nrow(dat),r_int = 0.75,
+             collab='white')  # WTF
+circ.barplot(start= pi/18, end= 17*pi/18, col = col.pal["val"], lwd = 1.5, border=col.pal["val"],
+             r=types["Validated",]/nrow(dat),r_int = 0.75,
+             collab='white')
+
+# Género reportado
+circ.barplot(start= 19*pi/18, end= 23*pi/18,
+             r=genre["Non-validated",]/nrow(dat),r_int = 0.75,
+             col = col.pal["no.val"], lwd=1., border=col.pal["no.val"],
+             collab='white')
+circ.barplot(start= 19*pi/18, end= 23*pi/18,
+             r=genre["Validated",]/nrow(dat),r_int = 0.75,
+             col = col.pal["val"], lwd = 1.5, border=col.pal["val"],
+             collab='white')
+
+# País reportado
+circ.barplot(start= 31*pi/18, end= 35*pi/18,
+             r=country["Non-validated",]/nrow(dat),r_int = 0.75,
+             col = col.pal["no.val"], lwd=1., border=col.pal["no.val"],
+             collab='white')
+circ.barplot(start= 31*pi/18, end= 35*pi/18,
+             r=country["Validated",]/nrow(dat),r_int = 0.75,
+             col = col.pal["val"], lwd = 1.5, border=col.pal["val"],
+             collab='white')
+
+# Bordes y labels en blanco para que no se pierda en el fondo negro
 circ.barplot(start= pi/18, end= 17*pi/18,
              r=types["Non-validated",]/nrow(dat),r_int = 0.75,
-             col = "darkred", lwd=1., border="white")
-circ.barplot(start= pi/18, end= 17*pi/18,
-             r=types["Validated",]/nrow(dat),r_int = 0.75,
-             col = "darkgreen", lwd = 1.5, border="white")
+             lwd=1, border=col.pal["border"],
+             labels=colnames(types), collab = col.pal["border"], cexlab = 0.7)
 
 circ.barplot(start= 19*pi/18, end= 23*pi/18,
              r=genre["Non-validated",]/nrow(dat),r_int = 0.75,
-             col = 'darkred', lwd=1., border='white')
-circ.barplot(start= 19*pi/18, end= 23*pi/18,
-             r=genre["Validated",]/nrow(dat),r_int = 0.75,
-             col = 'darkgreen', lwd = 1.5, border='white')
+             lwd=1., border=col.pal["border"],
+             labels=colnames(genre), collab = col.pal["border"], cexlab = 0.7)
+
 
 circ.barplot(start= 31*pi/18, end= 35*pi/18,
              r=country["Non-validated",]/nrow(dat),r_int = 0.75,
-             col = 'darkred', lwd=1., border='white')
-circ.barplot(start= 31*pi/18, end= 35*pi/18,
-             r=country["Validated",]/nrow(dat),r_int = 0.75,
-             col = 'darkgreen', lwd = 1.5, border='white')
+             lwd=1., border=col.pal["border"],
+             labels=colnames(country), collab = col.pal["border"], cexlab = 0.7)
 
 
-symbols(0, 0, circles = 0.7, add=T, bg='black',
-        fg='black', inches = F)
+# HISTOGRAMA CONTEO DE CARÁCTERES EN NARRATIVA:
+polar_polygon(start = 25*pi/18, end = 30*pi/18,
+              x = narrative$Validated$x, y = narrative$Validated$y,
+              x.min = 0, y.min = 0,
+              x.max = max(c(narrative$`Non-validated`$x,
+                            narrative$Validated$x)),
+              y.max = max(c(narrative$`Non-validated`$y,
+                            narrative$Validated$y)),
+              col = adjustcolor(col.pal["val"], 0.5),
+              border = col.pal["val"], lwd = 1.2,
+              r.int = 0.72, r =0.6)
 
-for(i in seq(0.1,0.6,length.out=50)) {
-  symbols(0, 0, circles = i, add=T, bg=adjustcolor('white',1/(20*i)),
-          fg=adjustcolor('white',1/(20*i)), inches = F)
+polar_polygon(start = 25*pi/18, end = 30*pi/18,
+              x = narrative$`Non-validated`$x, y = narrative$`Non-validated`$y,
+              x.min = 0, y.min = 0,
+              x.max = max(c(narrative$`Non-validated`$x,
+                            narrative$Validated$x)),
+              y.max = max(c(narrative$`Non-validated`$y,
+                            narrative$Validated$y)),
+              col = adjustcolor(col.pal["no.val"], 0.5),
+              border = col.pal["no.val"], lwd = 1.2,
+              r.int = 0.72, r =0.6)
+
+
+# TÍTULO CENTRAL:
+
+# Difuminado
+symbols(0, 0, circles = 0.7, add=T, bg=col.pal['bg'],fg=col.pal["bg"], inches = F)
+for(i in seq(0.1,0.575,length.out=50)) {
+  symbols(0, 0, circles = i, add=T, bg=adjustcolor(col.pal["light"],1/(20*i)),
+          fg=adjustcolor(col.pal["light"],1/(20*i)),
+          inches = F)
 }
-# points(x = 0, y = 0, col=adjustcolor('white', 1/i), cex=i/0.3, pch = 16)
-text(x = 0, y = 0.1, 'NEAR DEATH\nEXPERIENCES', col = 'black', font=2, cex=1.3)
+# Texto
+text(x = 0, y = 0.1, 'NEAR DEATH\nEXPERIENCES', col = '#2E1D0F', font=2, cex=1.3)
 text(x = 0, y = -0.1, 'Based on the Greyson Scale each\ncase is classified as:',
-     col = 'black', font=1, cex=0.75)
-legend(x=0,y=-0.15,legend = c('Validated (>6)', 'Non-validated (<7)'),
-       pt.bg = c('darkgreen', 'darkred'), pch=22, x.intersp = 0.7,
-       bty ='n', xjust = 0.5, text.font = 1, cex=0.7, pt.cex = 1.6)
+     col = '#2E1D0F', font=1, cex=0.75)
+legend(x=0,y=-0.15,legend = c('Validated (> 6)', expression("Non-validated ("<="7)")),
+       pt.bg = col.pal[c("val", "no.val")], col = col.pal["border"],pch=22, x.intersp = 0.7, y.intersp = 1,
+       bty ='n', xjust = 0.5, text.font = 1, cex=0.7, text.col = '#2E1D0F', pt.cex = 1.7)
 
 
+# CÍRCULO EXTERNO (Total de reportes)
 symbols(0, 0, circles = 1.75, add=T,
-        fg='gold', lty = 'solid', inches = F, lwd = 1)
+        fg=col.pal["light2"], lty = 'dashed', inches = F, lwd = 1.5)
 
 cases_rect <- rbind(
-  tocartesians(1.7, 5.8 * pi/4),
-  tocartesians(1.8, 5.8 * pi/4),
-  tocartesians(1.8, 6.2 * pi/4),
-  tocartesians(1.7, 6.2 * pi/4)
-)
-
-polygon(x = cases_rect[,1], y = cases_rect[,2], col = 'black', border = 'black')
-
+  tocartesians(1.7, 5.8 * pi/4),tocartesians(1.8, 5.8 * pi/4),
+  tocartesians(1.8, 6.2 * pi/4),tocartesians(1.7, 6.2 * pi/4))
+polygon(x = cases_rect[,1], y = cases_rect[,2], col = col.pal["bg"], border = col.pal["bg"])
 cases_rect <- colMeans(cases_rect)
 text(x = cases_rect["x"], y = cases_rect["y"], label = paste0(nrow(dat), ' reports'),
-     col = 'gold', font=2)
+     col = col.pal["light2"], font=2)
+
+
+# TÍTULO DE CADA SECCIÓN:
+polar_text(r = .64, theta = pi/2, lab = 'TYPE OF NARRATIVE (detected by AI)',
+           cex = 0.8, col=col.pal["light2"], font=2)
+
+polar_text(r = .64, theta = 3.5 * pi/3, lab = 'GENDER',
+           cex = 0.8, col=col.pal["light2"], font=2)
+
+polar_text(r = .64, theta = 3 * pi/2, lab = 'NARRATIVE LENGTH',
+           cex = 0.75, col=col.pal["light2"], font=2)
+
+polar_text(r = .64, theta =(5.5*pi)/3, lab = 'COUNTRY',
+           cex = 0.8, col=col.pal["light2"], font=2)
+
+# Texto :D
+rect(ytop = 2, ybottom = 1.62, xright = -2, xleft = 2, col = 'black')
+mtext(side=3,
+      text = '   Data from 589 NDERF accounts (1999–2025). Gender, country, narrative length, and type\nshow no distinct validated vs. non-validated pattern.',
+      col = col.pal["light2"], line = -2, adj = 0.05, font = 2)
+mtext(side = 3, adj = 0.065, line = -3, font = 1, cex = 0.85,
+      text = ' Visualization: Mendivenson Barragán • Data curation: Anthony Galvan • Data: NDERF',
+      col = adjustcolor(col.pal["light"], 0.5))
 
 dev.off()
